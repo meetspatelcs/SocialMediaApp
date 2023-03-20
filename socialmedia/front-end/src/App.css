@@ -1,0 +1,341 @@
+*{
+    margin: 0;
+    box-sizing: border-box;
+}
+
+:root{
+    font-size: 16px;
+    font-family: 'Open Sans';
+    --text-primary: #b6b6b6;
+    --text-secondary: #ececec;
+    --bg-primary: #010402;  /* this is the bg color */
+    --bg-secondary: #141418;
+
+    --bg-myAqua: #4bc3b5;
+    --bg-myBlue: #1C2C54;
+    --bg-myPink: #D175B7;
+    /* #4BC3B5 #1C2C54 #D175B7 */
+}
+
+.custom-main{
+    margin-left: 5rem;
+    height: "50%"!important;
+}
+
+/* This section is for login page */
+.box{
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.items{
+    background-color: white;
+    width: 30em;
+    height: 35em;
+    position: relative;
+    border-radius: 1em;
+    box-shadow: 0 0.188em 1.550em rgb(100, 156, 156);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.custom-formcontrol{
+    display: inline-block !important;
+    background-color: rgb(229, 226, 226) !important;
+    border: none !important;
+    height: 2em !important; 
+    width: 100% !important;
+    border-radius: 0.25em;
+    text-align: center;
+    padding: 2em;
+}
+
+.custom-btn{
+    width: 74%;
+    transition: 0.5s;
+    cursor: pointer;
+}
+
+.custom-btn:hover{
+    transform: scale(1.25);
+}
+
+.custom-body{
+    margin-left: 15rem;
+    padding: 1rem;
+}
+/************************************ This Section is for Dashboard page  ************************************/
+.itemsReg{
+    background-color: darkcyan;
+    width: 30em;
+    height: auto;
+    position: relative;
+    border-radius: 1em;
+    box-shadow: 0 0.188em 1.550em rgb(100, 156, 156);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+}
+
+/* this section is for nav bar */
+.custom-Navbarbody{
+    color: black !important;
+    background-color: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.custom-navbar{
+    position: fixed !important;
+    background-color: var(--bg-primary) !important;
+    transition: width 200ms ease !important;
+}
+
+.custom-navbarNav{
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    height: 100% !important;
+}
+
+.custom-navItem{
+    width: 100% !important;
+}
+
+.custom-navItem:last-child{
+    margin-top: auto !important;
+}
+
+.custom-navLink{
+    display: flex !important;
+    align-items: bottom I !important;
+    height: 5rem !important;
+    color: var(--text-primary) !important;
+    text-decoration: none !important;
+    filter: grayscale(100%) opacity(0.7) !important;
+    transition: var(--transition-speed) !important;
+}
+
+.custom-navLink:hover{
+    filter: grayscale(0%) opacity(1) !important;
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-secondary) !important;
+    width: 16rem !important;
+}
+
+.navLink-text{
+    display: none !important;
+    margin-left: 1rem !important;
+}
+
+.custom-navLink svg{
+    min-width: 2rem !important;
+    margin: 0 0.5rem !important;
+    font-size: 2rem !important;
+}
+
+.logo{
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+.my-primary{
+    color: #ff7eee !important;
+}
+
+.my-secondary{
+    color: #df49a6 !important;
+}
+
+.my-primary, .my-secondary{
+    transition: var(--transition-speed) !important;
+}
+
+/* small screens */
+@media only screen and (max-width: 600px){
+
+    .custom-navbar{
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 5rem !important;
+    }
+    .custom-navSpecial{
+        margin: -0.5rem !important;
+    }
+    .custom-navItem:first-child{
+        display: none !important;
+    }
+    .logo{
+        display: none !important;
+    }
+    .custom-navbarNav{
+        flex-direction: row !important;
+    }
+    .custom-navLink{
+        justify-content: center !important;
+    }
+    .friendNavLink-text{
+        display: none !important;
+    }
+    .custom-main{
+        margin: 0 !important;
+    }
+    .custom-postCard{
+        width: 100% !important;
+    }
+    /* .custom-postFriend{
+            }
+    .custom-postFriend div{
+        width: 35vw !important;
+           } */
+}
+
+
+/* large screens */
+@media only screen and (min-width: 600px){
+    .custom-navbar{
+        top: 0 !important;
+        width: 5rem !important;
+        height: 100vh !important;
+        position: fixed !important;
+    }
+    .custom-navSpecial{
+        margin-top: 5rem;
+    }
+    .custom-navbar:hover{
+        width: 16rem !important;
+    }
+    .custom-navbar:hover .navLink-text{
+        display: inline !important;
+        transition: opacity var(--transition-speed) !important;
+    }
+    .friendNavLink-text{
+        display: inline !important;
+        transition: opacity var(--transition-speed) !important;
+    }
+    .custom-postCard{
+        width: 50% !important;
+        min-height: 10rem;
+    }
+    .custom-aboutGrid{
+        grid-template-columns: repeat(2, 1fr);
+    }
+ 
+}
+
+/************************************ This Section is for Dashboard Section  ************************************/
+.custom-postBtn{
+    display: block !important; 
+    width: 50% !important;
+    border: none !important;
+    padding: 14px 28px !important; 
+    font-size: 16px !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    background-color: #D175B7 !important;
+}
+
+
+
+/************************************ This Section is for Dashboard page Post Modal  ************************************/
+.custom-postTextArea{
+    height: 10rem !important;
+    border: none !important;
+    resize: none !important;
+    background-color: whitesmoke !important;
+}
+
+.custom-modalHeader{
+    background-color: var(--bg-myBlue) !important;
+    color: var(--text-secondary) !important;
+}
+
+/************************************ This Section is for My Posts Section  ************************************/
+.custom-aboutGrid{
+    /* padding: 0 2%;
+    margin: 0; */
+    display: grid;
+    grid-template-columns: 45vw 45vw;
+    grid-gap: 0.5rem;
+    /* gap: 0.5rem; */
+}
+
+.custom-MyPostWrapper{
+    border: 1px dashed grey;
+    padding: 1.5em;
+    border-radius: 1em;
+    max-height: 30vh;
+    overflow: hidden;
+}
+
+.custom-cardUpost{
+    display:flex;
+    flex-direction: column; 
+    justify-content:center;
+    align-items:center;
+}
+
+
+
+/************************************ This Section is for Pages Section  ************************************/
+.custom-thumbnailContainer{
+    box-shadow: 0px 0px 5px 0px lightgrey;
+    margin: 0px 0.1rem;
+    
+}
+
+/************************************ This Section is for Friend Section  ************************************/
+
+.custom-friendNav{
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    height: 100% !important;
+    background-color: var(--bg-myBlue) !important;
+}
+
+.custom-friendItem{
+    width: 100% !important;
+}
+
+.custom-friendLink{
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 5rem !important;
+    color: var(--text-primary) !important;
+    text-decoration: none !important;
+    filter: grayscale(100%) opacity(1) !important;
+    transition: var(--transition-speed) !important;
+}
+
+.custom-friendLink:hover{
+    filter: grayscale(0%) opacity(1) !important;
+    background-color: var(--bg-myAqua) !important;
+    color: var(--text-secondary) !important;
+}
+
+.custom-friendLink svg{
+    min-width: 2rem !important;
+    margin: 0 0.5rem !important;
+    font-size: 2rem !important;
+}
+
+/* .friend-wrapper{
+    border: 1px dashed lightgray;
+    padding: 2em;
+    border-radius: 1em;
+} */

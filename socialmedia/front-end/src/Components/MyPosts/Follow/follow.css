@@ -1,0 +1,44 @@
+/* *********** large screen *********** */
+@media only screen and (min-width: 600px){
+    .vfMain-eachPage{
+        display: grid;
+        grid-template-columns: 10vw 10vw 10vw 10vw;
+        grid-gap: 10px;
+    }
+    .viewAllFPS-pages{
+        display: grid;
+        grid-template-columns: 20vw 20vw 20vw 20vw;
+        grid-gap: 10px;
+    }
+}
+
+/* *********** small screen *********** */
+@media only screen and (max-width: 600px){
+    .vfMain-eachPage{
+        display: grid;
+        grid-template-columns: 40vw 40vw;
+        grid-gap: 15px;
+    }
+    .viewAllFPS-pages{
+        display: grid;
+        grid-template-columns: 48vw 48vw;
+        grid-gap: 5px;
+    }
+    .viewAllF-bio{   
+        display: none; /* hide text on ViewAllFollow if screen is small */
+    }
+}
+
+.vAllFollow-mainBox{
+    background-color: lightgray;
+    width: 100vw;
+    height: 90vh;
+    overflow-y: auto;
+}
+.vAllFollow-Backbox{
+    position: relative;
+    height: 10vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

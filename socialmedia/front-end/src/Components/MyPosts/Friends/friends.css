@@ -1,0 +1,40 @@
+/* .custom-postFriend{
+    display: inline-block;
+}
+
+.custom-postFriend div{
+    width: 20vw;
+    margin-right: 1rem;
+} */
+
+/* *********** large screen *********** */
+@media only screen and (min-width: 600px){
+    .viewAllFVU-fList{
+        display: grid;
+        grid-template-columns: 20vw 20vw 20vw 20vw;
+        grid-gap: 30px;
+    }
+}
+
+/* *********** small screen *********** */
+@media only screen and (max-width: 600px){
+    .viewAllFVU-fList{
+        display: grid;
+        grid-template-columns: 48vw 48vw;
+        grid-gap: 5px;
+    }
+}
+
+.vAllFriend-mainBox{
+    background-color: lightgray;
+    width: 100vw;
+    height: 90vh;
+    overflow-y: auto;
+}
+.vAllFriend-Backbox{
+    position: relative;
+    height: 10vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

@@ -1,0 +1,29 @@
+/* large screens */
+@media only screen and (min-width: 600px){
+    .createdCard-img{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 15rem;
+        overflow: hidden;
+    }
+    .createdCard-btn{
+        width: 20vw;
+    }
+}
+
+/* small screens */
+@media only screen and (max-width: 600px){
+    .createdCard-img{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 5rem;
+        overflow: hidden;
+    }
+    .createdCard-btn{
+        width: 85vw;
+    }
+}

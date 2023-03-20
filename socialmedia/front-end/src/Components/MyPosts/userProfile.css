@@ -1,0 +1,64 @@
+/* *********** large screen *********** */
+@media only screen and (min-width: 600px){
+    .custom-profileGrid{
+        display: grid;
+        grid-template-columns: 45vw 45vw;
+        grid-gap: 0.5rem;
+    }
+    .custom-profileWrapper{
+        border: 1px solid lightgrey;
+        padding: 1.5em;
+        /* border-radius: 1em; */
+        max-height: 30vh;
+        height: 30vh;
+        overflow: hidden;
+    }
+    .viewMP-reqBtn{
+        margin: 0 2.5rem;
+    }
+    .upload-btn{
+        margin-top: 0.5rem;
+        margin-left: 2.5rem;
+        margin-right: 2.5rem;
+    }
+    .userThumb-styl{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 15rem;
+        overflow: hidden;
+    }
+}
+
+/* *********** small screen *********** */
+@media only screen and (max-width: 600px){
+    .custom-profileGrid{
+        max-width: 100vw;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    .custom-profileWrapper{
+        border: 1px solid lightgrey;
+        padding: 1.5em;
+        max-height: 30vh;
+        height: 30vh;
+        overflow: hidden;
+    }
+    .viewMP-reqBtn{
+        margin: 0 0.5rem;
+    }
+    .upload-btn{
+        margin-top: 0.5rem;
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+    .userThumb-styl{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 7.5rem;
+        overflow: hidden;
+    }
+}

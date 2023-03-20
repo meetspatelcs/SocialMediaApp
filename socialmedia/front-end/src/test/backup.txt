@@ -1,0 +1,208 @@
+
+from line 70
+function getInitialSegment(){
+
+        const firstSegment = bufferedSegments[0];
+        
+        const removeFirst = () => {
+            setBufferedSegments((curr) => curr.filter((segment) => segment.id !== 1));
+        };
+
+        removeFirst();
+        console.log(firstSegment, "getInit");
+        return firstSegment;
+    }
+
+    useEffect(() => {
+        console.log(bufferedSegments.length, "fdg");
+    }, [bufferedSegments])
+
+    function onSourceOpen(videoTag, e){
+
+        const mediaSource = e.target;
+        
+        if(mediaSource.sourceBuffers.length > 0){return;}
+
+        videoTag.addEventListener('seeking', onSeeking.bind(videoTag, mediaSource));
+        videoTag.addEventListener('progress', onProgress.bind(videoTag, mediaSource));
+                    
+        const videoBuffer = mediaSource.addSourceBuffer(mimeCodec);
+
+        // var initSegment = getInitialSegment();
+        const initSegment = tVideo.data;
+      
+        if(initSegment == null){
+            // Error fetching the initialization segment, end of the stream with error
+            mediaSource.endOfStream("network");
+            return;
+        }
+
+        // appends the initial segment
+        function firstAppendHandler(e){
+            
+            var sourceBuffer = e.target;
+            console.log(sourceBuffer, "g123");
+            sourceBuffer.removeEventListener('updateend', firstAppendHandler);
+
+            // mediaSource.duration = 1000;
+            appendNextMediaSegment(mediaSource);
+        }
+
+        videoBuffer.addEventListener('updateend', firstAppendHandler);
+        // videoBuffer.mode = 'sequence'
+        videoBuffer.appendBuffer(initSegment);
+
+    }
+
+    function appendNextMediaSegment(mediaSource){
+        console.log("in next");
+        if(mediaSource.readyState == "closed"){return;}
+        
+        if(!HaveMoreMediaSegments()){
+            
+            console.log("Have more functions has ended");
+
+            mediaSource.endOfStream();
+            return;
+        }
+
+        if(mediaSource.sourceBuffers[0].updating){ console.log("updateing");  return;}
+         // setMyIndex(myIndex+1);
+        // const mediaSegment = GetNextMediaSegment();
+
+        const mediaSegment = axios({url: `/api/pages/${pageId}/pagePostTemp/${myPostId}`, method: "GET", responseType: 'arraybuffer',  headers:{range: contentRange} })
+            .then((response) => 
+                response.data  
+            )
+            .then(data => {
+                mediaSource.sourceBuffers[0].appendBuffer(data);                
+                return data;
+            })
+            .catch((error) => {
+                mediaSource.endOfStream("network");
+            })
+          
+        console.log(mediaSegment, "my next chuck should be 314701");
+
+        // if(!mediaSegment){
+        //     console.log("not getting any media segment");
+            
+        //     mediaSource.endOfStream("network");
+        //     return;
+        // }
+        // const something = mediaSource.sourceBuffers[0];
+     
+        //     mediaSegment.then(testd => {
+        //         something.appendBuffer(testd);
+        //     }).then(data => console.log(something));
+
+        // console.log(mediaSource.sourceBuffers[0]);   
+        // console.log(mediaSource, "fddfssfd");
+    }
+
+    function onSeeking(mediaSource, e){
+        console.log(mediaSource, "is Seeking");
+        console.log(e, "target");
+        const video = e.target;
+
+        if(mediaSource.readyState == "open"){
+            mediaSource.sourceBuffers[0].abort();
+        }
+
+        SeekToMediaSegmentAt(video.currentTime);
+
+        // const duration = mediaSource.duration;
+       
+        // console.log(duration);
+        
+        // mediaSource.sourceBuffers[0].timestampOffset += duration;
+        // const nextInd = myIndex + 1;
+        // setMyIndex(nextInd);
+
+        appendNextMediaSegment(mediaSource);
+    }
+
+    function onProgress(mediaSource, e){
+        appendNextMediaSegment(mediaSource);
+    }
+
+    function HaveMoreMediaSegments(){
+
+        console.log(bufferedSegments.length ," should be > 0");
+        
+        return bufferedSegments.length > 0;
+        // return true;
+    }
+
+    const GetNextMediaSegment = getInitialSegment;
+    // function GetNextMediaSegment(){
+
+    function SeekToMediaSegmentAt(){
+        console.log(
+            "seeking to media function"
+        );
+    }
+
+
+
+
+    // page myposts.jsx
+                    {/* {validateStatus() ? friendList.filter(eachFriend => eachFriend.status === compStatus).map((eachFriend) => ( 
+                <div key={eachFriend.id} className='custom-postFriend' >
+                        {((userId == eachFriend.user.id) ?
+                            <div>
+                            <FriendRequests key={eachFriend.id} friendId = {eachFriend.id} 
+                            firstname={eachFriend.requestedUser.firstname} 
+                            lastname={eachFriend.requestedUser.lastname} compStatus={compStatus} 
+                            selectedFriendId={eachFriend.requestedUser.id} emitFriendCount={decreaseCount}
+                            />
+                            </div> 
+                            : 
+                            <div>
+                            <FriendRequests key={eachFriend.id} friendId = {eachFriend.id} 
+                            firstname={eachFriend.user.firstname} 
+                            lastname={eachFriend.user.lastname} compStatus={compStatus} 
+                            selectedFriendId={eachFriend.user.id} emitFriendCount={decreaseCount}
+                            />
+                            </div>
+                        )}
+                </div>    
+                        )) : <div>No data</div>
+                    } */}
+
+******************************************************pageFriend List
+                    if(friendId == userId){
+            console.log(friendId == userId);
+            return;
+        } 
+        else{
+            if(!visitUserId){
+                return <div style={{marginLeft: "auto", marginRight: "auto"}}>
+                <Button style={{width: "75px"}} size='sm' className='mt-1' variant="danger" 
+                onClick={() => {removeRequest(); emitFriendCount();}}>Remove</Button>
+                <Button style={{width: "75px"}} size='sm' className='mt-1'
+                >View</Button>
+                </div>
+            }
+            else{
+                // TODO: check if the user listed is also friend with logged in user
+                // friend with logged user: display remove button, visit button
+                // not friend with logged user: display add button, visit button
+                if(validateFriend()){
+                    return <div style={{marginLeft: "auto", marginRight: "auto"}}>
+                    <Button style={{width: "75px"}} size='sm' className='mt-1' variant='danger'
+                    >Remove</Button><br/>
+                    <Button style={{width: "75px"}} size='sm' className='mt-1' 
+                    >View</Button>
+                    </div>
+                }
+                else{
+                    return <div style={{marginLeft: "auto", marginRight: "auto"}}>
+                    <Button style={{width: "75px"}} size='sm' className='mt-1' 
+                    onClick={() => {addRequest();}}>Add</Button><br/>
+                    <Button style={{width: "75px"}} size='sm' className='mt-1' 
+                    >View</Button>
+                    </div>
+                }
+            }
+        }

@@ -1,0 +1,52 @@
+/* *********** large screen *********** */
+@media only screen and (min-width: 600px){
+    .vmdiMain-eachMedia{
+        display: grid;
+        grid-template-columns: 10vw 10vw 10vw 10vw;
+        grid-gap: 15px;
+    }
+    .viewMPM-imgSize{
+        max-width: 10vw;
+        max-height: auto;
+    }
+    .pAllImg-Backbox{
+        position: relative;
+        height: 10vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+}
+
+/* *********** small screen *********** */
+@media only screen and (max-width: 600px){
+    .vmdiMain-eachMedia{
+        display: grid;
+        grid-template-columns: 40vw 40vw;
+        grid-gap: 15px;
+    }
+    .viewMPM-imgSize{
+        max-width: 40vw;
+        max-height: auto;
+    }
+    .pAllImg-Backbox{
+        position: relative;
+        height: 10vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}
+
+.pAllImg-mainBox{
+    background-color: lightgray;
+    width: 100vw;
+    height: 90vh;
+    overflow-y: auto;
+}
+.img-center{
+    display: flex;
+    justify-content: center;
+    align-items: center;   
+}

@@ -1,0 +1,27 @@
+/* *********** large screen *********** */
+@media only screen and (min-width: 600px){
+    .friendLC-RC-wrapper{
+        border: 1px solid lightgray;
+        padding: 2em;
+        border-radius: 1em;
+    }
+    .friendLC-RC-eachFriend{
+        display: grid;
+        grid-template-columns: 10vw 10vw 10vw 10vw 10vw 10vw;
+        grid-gap: 10px;
+    }
+}
+
+/* *********** small screen *********** */
+@media only screen and (max-width: 600px){
+    .friendLC-RC-wrapper{
+        border: 1px solid lightgray;
+        padding: 2rem;
+        /* padding: 2rem; */
+    }
+    .friendLC-RC-eachFriend{
+        display: grid;
+        grid-template-columns: 45vw 45vw;
+        grid-gap: 5px;
+    }
+}
