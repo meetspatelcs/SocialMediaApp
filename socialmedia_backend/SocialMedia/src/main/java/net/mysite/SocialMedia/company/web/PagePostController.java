@@ -7,14 +7,13 @@ import net.mysite.SocialMedia.company.sevice.PagePostPhotoService;
 import net.mysite.SocialMedia.company.sevice.PagePostService;
 import net.mysite.SocialMedia.company.sevice.PageService;
 import net.mysite.SocialMedia.domain.User;
-import net.mysite.SocialMedia.errors.ImageNotFoundException;
-import net.mysite.SocialMedia.errors.InvalidDescriptionException;
-import net.mysite.SocialMedia.errors.PageNotFoundException;
-import net.mysite.SocialMedia.errors.PostNotFoundException;
+import net.mysite.SocialMedia.err.MissingFieldException;
+import net.mysite.SocialMedia.err.PageNotFoundException;
+import net.mysite.SocialMedia.err.PagePostMediaNotFoundException;
+import net.mysite.SocialMedia.err.PagePostNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -43,30 +42,24 @@ public class PagePostController {
                                                  @RequestParam(value = "description", required = true) String description,
                                                  @AuthenticationPrincipal User user) throws IOException {
         try{
-            if(pageId == null || description.trim().isEmpty()){
-                throw new InvalidDescriptionException("Description cannot be null or empty.");
-            }
-
             PagePost newPagePost = pagePostService.save(pageId, description);
             PagePostPhoto newPPostPhoto = pagePostPhotoService.save(newPagePost, myFile, user);
-
             return ResponseEntity.ok(newPPostPhoto);
         }
-        catch (IOException e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-        catch (InvalidDescriptionException e){
-            logger.error(HttpStatus.BAD_REQUEST + ": description can not be empty for page post.");
+        catch (MissingFieldException e){
+            logger.error(HttpStatus.BAD_REQUEST + ": error in pagePost entity." + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
-        catch (DataAccessException e){
-            logger.error(HttpStatus.BAD_REQUEST + ": failed to create post for page: " + pageId);
+        catch (PageNotFoundException e){
+            logger.error(HttpStatus.BAD_REQUEST + ": error in page entity. " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
-        catch (Exception e){
-            logger.error(HttpStatus.INTERNAL_SERVER_ERROR + ": an error occurred.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred.");
+        catch (PagePostNotFoundException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in pagePost entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
+        catch (IOException e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @GetMapping("/page/{pageId}/allPosts")
@@ -77,17 +70,10 @@ public class PagePostController {
             return ResponseEntity.ok(allPagePosts);
         }
         catch (PageNotFoundException e){
-            logger.error(HttpStatus.NOT_FOUND + ":" + "Page with ID " + pageId + " not found in Entity Page");
+            logger.error(HttpStatus.NOT_FOUND + ": error in page entity. " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        catch (NullPointerException e){
-            logger.error(HttpStatus.NOT_FOUND + ": No posts are found in entity page With ID " + pageId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
-        catch (Exception e){
-            logger.error(HttpStatus.INTERNAL_SERVER_ERROR + "An error occurred.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred");
-        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @GetMapping("/page/{pageId}/posts/{postId}")
@@ -96,12 +82,11 @@ public class PagePostController {
             PagePostPhoto myPost = pagePostPhotoService.getById(pageId,  postId);
             return ResponseEntity.ok(myPost);
         }
-        catch (PostNotFoundException e){
+        catch (PagePostMediaNotFoundException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in pagePostPhoto entity. " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred.");
-        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @GetMapping("/page/{pageId}/postImg/{postId}")
@@ -110,18 +95,19 @@ public class PagePostController {
             byte[] imgBuff = pagePostPhotoService.getImgById(pageId, postId);
             return ResponseEntity.ok(imgBuff);
         }
-        catch (NullPointerException e){
-            logger.error(HttpStatus.BAD_REQUEST + "img was not for post with ID " + postId + " in PagePost entity.");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
-        catch (ImageNotFoundException e){
-            logger.error(HttpStatus.NOT_FOUND + ": post was not found in entity pagePost.");
+        catch (PagePostMediaNotFoundException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in pagePostPhoto entity. " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        catch (Exception e){
-            logger.error(HttpStatus.INTERNAL_SERVER_ERROR + ": an error occurred in pagePost entity.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred.");
+        catch (NullPointerException e){
+            logger.error(HttpStatus.NO_CONTENT + ": error in pagePostPhoto entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(e.getMessage());
         }
+        catch (IOException e){
+            logger.error(HttpStatus.INTERNAL_SERVER_ERROR + ": error in pagePostPhoto entity. " +  "Something went wrong.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @GetMapping("/page/{pageId}/postVid/{pagePostId}")
@@ -131,23 +117,28 @@ public class PagePostController {
         try{
             return Mono.just(pagePostPhotoService.getVideoById(pageId, pagePostId, httpRangeList));
         }
-        catch (IOException e){
-            logger.error(HttpStatus.BAD_REQUEST + "Something went wrong while fetching video for page.");
-            return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
+        catch (PagePostMediaNotFoundException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in pagePostPhoto entity. " + e.getMessage());
+            return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage()));
         }
+        catch (NullPointerException e){
+            logger.error(HttpStatus.NO_CONTENT + ": error in pagePostPhoto entity. " + e.getMessage());
+            return Mono.just(ResponseEntity.status(HttpStatus.NO_CONTENT).body(e.getMessage()));
+        }
+        catch (IOException e){ return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred.")); }
     }
 
-    //    TODO: try catch below, not done all catches
     @DeleteMapping("/page/{pageId}/posts/{postId}")
     public ResponseEntity<?> removePostOnPage(@PathVariable Long pageId, @PathVariable Long postId){
         try{
             pagePostService.removeById(pageId, postId);
             return ResponseEntity.ok("Post has been deleted!");
         }
-        catch (Exception e){
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        catch (PageNotFoundException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in page entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @PutMapping(value = "/page/{pageId}/posts/{postId}", consumes = {MULTIPART_FORM_DATA})
@@ -159,23 +150,19 @@ public class PagePostController {
         try{
             PagePost updatePost = pagePostService.UpdatePagePostById(postId, description);
             PagePostPhoto pagePostPhoto = pagePostPhotoService.getById(pageId, postId);
-
-            if(pagePostPhoto != null && myFile != null){ pagePostPhotoService.updateSave(pagePostPhoto, myFile, user);}
-
+            if(myFile != null){ pagePostPhotoService.updateSave(pagePostPhoto, myFile, user);}
             return ResponseEntity.ok(pagePostPhoto);
         }
-        catch (IOException e){
-            logger.error(HttpStatus.INTERNAL_SERVER_ERROR + ": an error occurred.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred.");
-        }
-        catch (PostNotFoundException e){
-            logger.error(HttpStatus.NOT_FOUND + ": post was not found on page: " + pageId);
+        catch (PagePostNotFoundException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in pagePost entity. " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        catch (Exception e){
-            logger.error(HttpStatus.INTERNAL_SERVER_ERROR + ": an error occurred.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred.");
+        catch (PagePostMediaNotFoundException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in pagePostPhoto entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
+        catch (IOException e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong."); }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @GetMapping("/page/{pageId}/allMediaInfo/{mediaType}")
@@ -186,16 +173,13 @@ public class PagePostController {
             return ResponseEntity.ok(mediaInfoList);
         }
         catch (PageNotFoundException e){
-            logger.error(HttpStatus.NOT_FOUND + ": Page not found in entity Page, ID " + pageId);
+            logger.error(HttpStatus.NOT_FOUND + ": error in page entity. " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        catch (NullPointerException e){
-            logger.error(HttpStatus.NOT_FOUND + ": No Page Post Photo content.");
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(e.getMessage());
+        catch (PagePostNotFoundException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in pagePost entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        catch (Exception e){
-            logger.error(HttpStatus.INTERNAL_SERVER_ERROR + ": An error occurred.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred.");
-        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 }

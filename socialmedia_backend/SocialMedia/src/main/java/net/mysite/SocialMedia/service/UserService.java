@@ -1,16 +1,14 @@
 package net.mysite.SocialMedia.service;
 
-import net.mysite.SocialMedia.domain.Friend;
 import net.mysite.SocialMedia.domain.User;
 import net.mysite.SocialMedia.dto.UserDto;
-import net.mysite.SocialMedia.errors.NotFoundException;
-import net.mysite.SocialMedia.errors.UserNotFoundException;
-import net.mysite.SocialMedia.repository.FriendRepository;
+import net.mysite.SocialMedia.err.IdentificationException;
+import net.mysite.SocialMedia.err.UsernameAlreadyTakenException;
+import net.mysite.SocialMedia.err.UserNotFoundException;
 import net.mysite.SocialMedia.repository.UserRepository;
 import net.mysite.SocialMedia.util.CustomPasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -22,8 +20,6 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private FriendRepository friendRepository;
-    @Autowired
     private CustomPasswordEncoder customPasswordEncoder;
 
     public Optional<User> findByUsername(User user){
@@ -31,51 +27,41 @@ public class UserService {
     }
 
     public Optional<User> findById(Long friendId){
-        return userRepository.findById(friendId);
-    }
-
-    public Set<User> findAll(User user) {
-        Set<User> allUsers = getAllUsers();
-        Set<Friend> friendList = friendRepository.findAllFriends(user);
-        Set<User> userSet = removeFriendsFromList(allUsers, friendList);
-        userSet.remove(user);
-        return userSet;
-    }
-    private Set<User> getAllUsers(){
-        List<User> tempList = userRepository.findAll();
-        Set<User> newUserList = new HashSet<>();
-        newUserList.addAll(tempList);
-        return newUserList;
-    }
-    private Set<User> removeFriendsFromList(Set<User> users, Set<Friend> friends){
-        Set<User> newSetFriendsTOAdd = new HashSet<>();
-
-        for(Friend myFriend : friends){
-
-            if(users.contains(myFriend.getUser())){
-                users.remove(myFriend.getUser());
-            }
-            if(users.contains(myFriend.getRequestedUser())){
-                users.remove(myFriend.getRequestedUser());
-            }
-
-        }
-        newSetFriendsTOAdd.addAll(users);
-
-        return newSetFriendsTOAdd;
+        Optional<User> user = userRepository.findById(friendId);
+        if(user.isEmpty()){ throw new UserNotFoundException("User does not exists."); }
+        return user;
     }
 
     public User createUser(UserDto userDto) {
-        User newUser = new User();
-        newUser.setFirstname(userDto.getFirstname());
-        newUser.setLastname(userDto.getLastname());
 
-        newUser.setDob(convertDate(userDto.getDob()));
-        newUser.setUsername(userDto.getUsername());
-        String encodedPassword = customPasswordEncoder.getPasswordEncoder().encode(userDto.getPassword());
+        String first = userDto.getFirstname();
+        String last = userDto.getLastname();
+        String username = userDto.getUsername();
+        String idNum = userDto.getIdentification();
+        String date = userDto.getDob();
+        String pass = userDto.getPassword();
+
+        if(username.isEmpty()){ throw new IllegalArgumentException("Username cannot be null or empty."); }
+        if(idNum.isEmpty()){ throw new IllegalArgumentException("Identification number cannot be null or empty."); }
+
+        if(isUsernameTaken(userDto.getUsername())){ throw new UsernameAlreadyTakenException("This email address is already exists."); }
+        if(isIdTaken(userDto.getIdentification())){ throw new IdentificationException("This ID already exists in database."); }
+
+        if(first.isEmpty()){ throw new IllegalArgumentException("First name cannot be null or empty."); }
+        if(last.isEmpty()){ throw new IllegalArgumentException("Last name cannot be null or empty."); }
+        if(date.isEmpty()){ throw new IllegalArgumentException("Date of Birth name cannot be null or empty."); }
+        if(pass.isEmpty()){ throw new IllegalArgumentException("Password cannot be null or empty."); }
+
+        User newUser = new User();
+        newUser.setFirstname(first);
+        newUser.setLastname(last);
+
+        newUser.setDob(convertDate(date));
+        newUser.setUsername(username);
+        String encodedPassword = customPasswordEncoder.getPasswordEncoder().encode(pass);
         newUser.setPassword(encodedPassword);
 
-        newUser.setIdentification(userDto.getIdentification());
+        newUser.setIdentification(idNum);
         newUser.setCreatedOn(LocalDate.now());
         newUser.setIsActive('0');
 
@@ -87,21 +73,20 @@ public class UserService {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         try {
             return formatter.parse(date);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
         }
+        catch (ParseException e) { throw new RuntimeException(e); }
     }
 
     public Set<User> getNotFriendsWithUser(User user) {
-        Set<User> userSet;
-        userSet = userRepository.findUserByNonFriends(user);
-        if(userSet.isEmpty()){ throw new NotFoundException("Users not found to add in friends list.");}
+        Set<User> userSet = userRepository.findUserByNonFriends(user);
+        if(userSet.isEmpty()){ return Collections.emptySet();}
         return userSet;
     }
 
     public Set<User> getUserBySearchTerm(String searchTerm, User user) {
-        Set<User> userSet;
-        userSet = userRepository.findUserByNameOrEmail(searchTerm, user.getId());
+        if(searchTerm.isEmpty()){ throw new IllegalArgumentException("Search term cannot be empty."); }
+
+        Set<User> userSet = userRepository.findUserByNameOrEmail(searchTerm, user.getId());
         if(userSet.isEmpty()){ throw new UserNotFoundException("User was not found.");}
         return userSet;
     }
@@ -109,8 +94,5 @@ public class UserService {
     public boolean isUsernameTaken(String username) {
         return userRepository.findByUsername(username).isPresent();
     }
-
-    public boolean isIdTaken(String Identification) {
-        return userRepository.findByIdentification(Identification).isPresent();
-    }
+    public boolean isIdTaken(String Identification) { return userRepository.findByIdentification(Identification).isPresent(); }
 }

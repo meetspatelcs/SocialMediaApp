@@ -16,4 +16,9 @@ public interface PageLikeRepository extends JpaRepository<PageLikes, Long> {
     @Transactional
     @Query("DELETE FROM PageLikes l WHERE (l.pagePost.id = :pagePostId AND l.user = :user)")
     void deletePageLikeByPagePostIdAndUser(Long pagePostId, User user);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM PageLikes l WHERE (l.pagePost.id = :pagePostId AND l.user = :user)")
+    int deleteLikeByPostRefAndUser(Long pagePostId, User user);
 }

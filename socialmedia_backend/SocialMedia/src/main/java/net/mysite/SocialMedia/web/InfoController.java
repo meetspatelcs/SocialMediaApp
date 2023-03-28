@@ -3,8 +3,7 @@ package net.mysite.SocialMedia.web;
 import net.mysite.SocialMedia.domain.Info;
 import net.mysite.SocialMedia.domain.User;
 import net.mysite.SocialMedia.dto.UserEditDto;
-import net.mysite.SocialMedia.errors.UserNotFoundException;
-import net.mysite.SocialMedia.errors.UserUpdateException;
+import net.mysite.SocialMedia.err.UserNotFoundException;
 import net.mysite.SocialMedia.service.InfoService;
 import net.mysite.SocialMedia.service.PostService;
 import org.slf4j.Logger;
@@ -14,9 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.NoSuchElementException;
-
 
 @RestController
 @RequestMapping("/api/UsersInfo")
@@ -33,13 +30,11 @@ public class InfoController {
             Info myInfo = infoService.getUserInfoHandler(user);
             return ResponseEntity.ok(myInfo);
         }
-        catch (UserNotFoundException e){
+        catch (NoSuchElementException e){
+            logger.error(HttpStatus.NOT_FOUND + ": " + e.getMessage() + " Error occurred in info Entity.");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        catch (Exception e){
-            logger.error("An error occurred while retrieving user info");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     // fetch info of the visited user
@@ -50,13 +45,11 @@ public class InfoController {
             return ResponseEntity.ok(visitUserInfo);
         }
         catch (NoSuchElementException e){
-            logger.error("User with ID " + userId + " not found.");
+            logger.error("USERID: " + userId);
+            logger.error(HttpStatus.NOT_FOUND + ": " + e.getMessage() + " Error occurred in info Entity." );
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        catch (RuntimeException e){
-            logger.error("An error occurred while fetching user info for ID " + userId + "." );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while fetching user info for ID " + userId);
-        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @PutMapping("{personalInfoId}")
@@ -69,13 +62,13 @@ public class InfoController {
             updatedInfo.setUser(null);
             return ResponseEntity.ok(updatedInfo);
         }
-        catch (UserUpdateException e){
-            logger.error("An error occurred.");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
         catch (NoSuchElementException e){
-            logger.error("Info with ID " + personalInfoId + " not found.");
+            logger.error(HttpStatus.NOT_FOUND + "Failed to find data in database, entity Info. ID: " + personalInfoId);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch (UserNotFoundException e){
+            logger.error(HttpStatus.CONFLICT + e.getMessage() + "The Entity UserInfo could not find any ref to User with ID: " + personalInfoId + "and other info.");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
         catch (Exception e){
             logger.error("Error updating user info.");

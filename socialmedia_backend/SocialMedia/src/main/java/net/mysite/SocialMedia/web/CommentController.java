@@ -4,7 +4,7 @@ import net.mysite.SocialMedia.domain.Comment;
 import net.mysite.SocialMedia.domain.Posts;
 import net.mysite.SocialMedia.domain.User;
 import net.mysite.SocialMedia.dto.CommentDto;
-import net.mysite.SocialMedia.errors.PageNotFoundException;
+import net.mysite.SocialMedia.err.MissingFieldException;
 import net.mysite.SocialMedia.service.CommentService;
 import net.mysite.SocialMedia.service.PostService;
 import org.slf4j.Logger;
@@ -31,26 +31,32 @@ public class CommentController {
                                            @RequestBody CommentDto commentDto){
         try{
             Posts post = postService.getById(commentDto.getPost());
-
             Comment newComment = commentService.createComment(post, user, commentDto);
             return ResponseEntity.ok(newComment);
         }
-        catch (PageNotFoundException e){
-            logger.error(HttpStatus.BAD_REQUEST + ": failed to create comment, post was not found: " + commentDto.getPost());
+        catch (NullPointerException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in post entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch (MissingFieldException e){
+            logger.error(HttpStatus.BAD_REQUEST + ": error in comment entity. " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
-        catch (Exception e){
-            logger.error(HttpStatus.INTERNAL_SERVER_ERROR + ": an error occurred.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred.");
-        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @GetMapping("{postId}/comment")
     public ResponseEntity<?> getAllComments(@PathVariable Long postId,
                                             @AuthenticationPrincipal User user){
-        Posts post = postService.getById(postId);
-
-        Set<Comment> commentSet = commentService.getAllCommentsOfPost(post);
-        return ResponseEntity.ok(commentSet);
+        try{
+            Posts post = postService.getById(postId);
+            Set<Comment> commentSet = commentService.getAllCommentsOfPost(post);
+            return ResponseEntity.ok(commentSet);
+        }
+        catch (NullPointerException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in post entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 }

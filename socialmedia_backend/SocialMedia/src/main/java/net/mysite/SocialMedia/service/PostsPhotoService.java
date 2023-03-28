@@ -4,16 +4,14 @@ import net.mysite.SocialMedia.company.sevice.PagePostPhotoService;
 import net.mysite.SocialMedia.domain.Posts;
 import net.mysite.SocialMedia.domain.PostsPhoto;
 import net.mysite.SocialMedia.domain.User;
-import net.mysite.SocialMedia.errors.DatabaseException;
-import net.mysite.SocialMedia.errors.ImageNotFoundException;
-import net.mysite.SocialMedia.errors.UserNotFoundException;
-import net.mysite.SocialMedia.repository.PostRepository;
+import net.mysite.SocialMedia.err.PostMediaNotFoundException;
+import net.mysite.SocialMedia.err.UserNotFoundException;
 import net.mysite.SocialMedia.repository.PostsPhotoRepository;
 import net.mysite.SocialMedia.repository.UserRepository;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,50 +36,36 @@ public class PostsPhotoService {
     @Autowired
     private PostsPhotoRepository postsPhotoRepository;
     @Autowired
-    private PostRepository postRepository;
-    @Autowired
     private UserRepository userRepository;
     private final Logger logger = LoggerFactory.getLogger(PagePostPhotoService.class);
     private static final String IMAGE_TYPE = "image/";
-
 
     public PostsPhoto save(Posts newPost, User user, MultipartFile myFile) throws IOException {
         PostsPhoto newPostImg = new PostsPhoto();
         newPostImg.setPosts(newPost);
 
-        if(myFile != null){
-            largeFileHandler(newPostImg, user, myFile);
-            newPostImg.setMyFileName(myFile.getOriginalFilename());
-            newPostImg.setType(myFile.getContentType());
-        }
-        try{
-            return postsPhotoRepository.save(newPostImg);
-        }
-        catch (DataAccessException e){
-            throw new DatabaseException("Error saving PostsPhoto object to the database.");
-        }
+        if(myFile != null){ largeFileHandler(newPostImg, user, myFile); }
+
+        return postsPhotoRepository.save(newPostImg);
     }
 
     public PostsPhoto getById(Long postId) {
-        return postsPhotoRepository.findById(postId).orElseThrow(() -> new ImageNotFoundException("Image not found with ID: " + postId));
+        return postsPhotoRepository.findById(postId)
+                .orElseThrow(() -> new PostMediaNotFoundException("Failed to find media ref to post."));
     }
 
-    private void largeFileHandler(PostsPhoto postMedia, User user, MultipartFile myFile) throws IOException{
+    private void largeFileHandler(PostsPhoto postMedia, @NotNull User user, MultipartFile myFile) throws IOException{
 
         byte[] bufferedBytes = new byte[1024];
         String currUser = user.getUsername().replaceAll("[^a-zA-Z0-9]", "");
 
         String absolutePath = "D://users/";
         File validateDir = new File(absolutePath + currUser);
-        if(!validateDir.exists()){
-            validateDir.mkdir();
-        }
+        if(!validateDir.exists()){ validateDir.mkdir(); }
 
         String mediaDirName = "userposts";
         File preMediaFile = new File(validateDir + File.separator + mediaDirName);
-        if(!preMediaFile.exists()){
-            preMediaFile.mkdir();
-        }
+        if(!preMediaFile.exists()){ preMediaFile.mkdir(); }
 
         String contentType = myFile.getContentType();
         String fileContent = contentType.split("/")[0];
@@ -93,9 +78,7 @@ public class PostsPhotoService {
         postMedia.setType(contentType);
 
         File mediaDir = new File(mediaDirPath);
-        if(!mediaDir.exists()){
-            mediaDir.mkdir();
-        }
+        if(!mediaDir.exists()){ mediaDir.mkdir(); }
 
         File file = new File(currPath);
         try(BufferedInputStream fileInputStream = new BufferedInputStream(myFile.getInputStream());
@@ -108,8 +91,9 @@ public class PostsPhotoService {
     }
 
     public ResponseEntity<byte[]> getVideoById(Long postId, String range) throws IOException{
-        PostsPhoto currVideo = postsPhotoRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Video was not found"));
+        PostsPhoto currVideo = getById(postId); // throws post media not found
+        String vidPath = currVideo.getPath();
+        if(vidPath.length() == 0){ throw new NullPointerException("No video was found."); }
 
         long startRange = 0;
         long endRange = CHUNK_SIZE;
@@ -118,13 +102,9 @@ public class PostsPhotoService {
         if(range != null){
             String[] ranges = range.split("-");
             startRange = Long.parseLong(ranges[0].substring(6));
-            if(ranges.length > 1){
-                endRange = Long.parseLong(ranges[1]);
-            }
-            else{
-                endRange = startRange + CHUNK_SIZE;
-            }
-                endRange = Math.min(endRange, fileSize - 1);
+            if(ranges.length > 1){ endRange = Long.parseLong(ranges[1]); }
+            else{ endRange = startRange + CHUNK_SIZE; }
+            endRange = Math.min(endRange, fileSize - 1);
         }
 
         try{
@@ -132,9 +112,7 @@ public class PostsPhotoService {
 
             final String contentLength = String.valueOf((endRange - startRange) + 1);
             HttpStatus httpStatus = HttpStatus.PARTIAL_CONTENT;
-
             if(endRange+1 >= fileSize){ httpStatus = HttpStatus.OK; }
-
             return ResponseEntity.status(httpStatus)
                     .header(CONTENT_TYPE, currVideo.getType())
                     .header(ACCEPT_RANGES, BYTES)
@@ -147,7 +125,7 @@ public class PostsPhotoService {
         }
     }
 
-    private byte[] readByteRange(String fileName, long start, long end, PostsPhoto currMedia) throws IOException {
+    private byte[] readByteRange(String fileName, long start, long end, @NotNull PostsPhoto currMedia) throws IOException {
         Path path = Paths.get(currMedia.getPath());
         try (InputStream inputStream = (Files.newInputStream(path));
              ByteArrayOutputStream bufferedOutputStream = new ByteArrayOutputStream()) {
@@ -166,7 +144,6 @@ public class PostsPhotoService {
 
     private String dateTimeConverter(){
         LocalDateTime currTime = LocalDateTime.now();
-
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         String str = currTime.format(formatter);
@@ -176,9 +153,8 @@ public class PostsPhotoService {
         return str;
     }
 
-    public Long getFileSize(String path){
+    private Long getFileSize(@NotNull String path){
         String fileName = path.substring(path.lastIndexOf("\\") + 1);
-
         return Optional.ofNullable(fileName)
                 .map(file -> Paths.get(path))
                 .map(this::sizeFromFile)
@@ -195,28 +171,18 @@ public class PostsPhotoService {
         return 0L;
     }
 
-    public byte[] getImgById(Long postId) {
+    public byte[] getImgById(Long postId) throws IOException {
         PostsPhoto pMedia = getById(postId);
 
-        if(pMedia == null){
-            throw new ImageNotFoundException("Image not found for postId: " + postId);
-        }
-
-        try{
-            String filePath = pMedia.getPath();
-            String fileName = filePath.substring(filePath.lastIndexOf("\\") + 1);
-            System.out.println(pMedia.getPath().substring(pMedia.getPath().lastIndexOf("\\") + 1));
-            byte[] imgByte = readByteRange(fileName, 0, getFileSize(pMedia.getPath())-1, pMedia);
-            return imgByte;
-        }
-        catch (IOException e){
-            logger.error("Failed to read image with postId: {}", postId, e);
-            throw new RuntimeException("Failed to read image for postId: " + postId);
-        }
+        String filePath = pMedia.getPath();
+        if(filePath == null) { throw new NullPointerException("There is no media."); }
+        String fileName = filePath.substring(filePath.lastIndexOf("\\") + 1);
+        return readByteRange(fileName, 0, getFileSize(filePath)-1, pMedia);
     }
 
     public Set<PostsPhoto> findAllImg(User user) {
         Set<PostsPhoto> tempList = postsPhotoRepository.findAllImg(user);
+        if(tempList.isEmpty()){ return Collections.emptySet(); }
 
         return tempList.stream()
                 .filter(p -> p.getType().startsWith(IMAGE_TYPE))
@@ -224,11 +190,9 @@ public class PostsPhotoService {
     }
 
     public Set<PostsPhoto> findAllImgHandler(Long userId) {
-
-        if(!userRepository.existsById(userId)){
-            throw new UserNotFoundException("User with Id: " + userId + " not found.");
-        }
+        if(!userRepository.existsById(userId)){ throw new UserNotFoundException("User does not exists."); }
         Set<PostsPhoto> tempList = postsPhotoRepository.getAllImgWithUserId(userId);
+        if(tempList.isEmpty()){ return Collections.emptySet(); }
 
         return tempList.stream()
                 .filter(p -> p.getType().startsWith(IMAGE_TYPE))
@@ -239,7 +203,6 @@ public class PostsPhotoService {
         largeFileHandler(postsPhoto, user, file);
         postsPhotoRepository.save(postsPhoto);
     }
-    public void deleteById(Long delId) {
-        postsPhotoRepository.deleteById(delId);
-    }
+
+    public void deleteById(Long delId) { postsPhotoRepository.deleteById(delId); }
 }

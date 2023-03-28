@@ -4,20 +4,19 @@ import net.mysite.SocialMedia.domain.Friend;
 import net.mysite.SocialMedia.domain.User;
 import net.mysite.SocialMedia.dto.FriendDto;
 import net.mysite.SocialMedia.dto.FriendIdDto;
-import net.mysite.SocialMedia.errors.*;
+import net.mysite.SocialMedia.err.*;
+import net.mysite.SocialMedia.err.UserNotFoundException;
 import net.mysite.SocialMedia.service.FriendService;
 import net.mysite.SocialMedia.service.PostService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 import java.util.Set;
-
 
 @RestController
 @RequestMapping("/api/friends")
@@ -33,9 +32,11 @@ public class FriendController {
             Set<Friend> myFriends = friendService.findById(user);
             return ResponseEntity.ok(myFriends);
         }
-        catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to get user's friends.");
+        catch (EmptyFriendsException e){
+            logger.error(HttpStatus.NO_CONTENT + ": error in friends entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(e.getMessage());
         }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @GetMapping("/user/{friendId}/validateFriend")
@@ -43,11 +44,12 @@ public class FriendController {
         try{
             Friend friendStat = friendService.getByUserAndFriend(friendId, user);
             return ResponseEntity.ok(friendStat);
-        } catch (FriendNotFoundException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while getting friend status.");
         }
+        catch (NotFriendException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in friends entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @GetMapping("/user/{userId}")
@@ -57,11 +59,14 @@ public class FriendController {
             return ResponseEntity.ok(friendList);
         }
         catch (UserNotFoundException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in friend entity. " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        catch (EmptyFriendsException e){
+            logger.error(HttpStatus.NO_CONTENT + ": error in friends entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(e.getMessage());
         }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @GetMapping("/user/{userId}/all")
@@ -70,26 +75,25 @@ public class FriendController {
             Set<FriendIdDto> friendLis = friendService.getFriendListAll(userId);
             return ResponseEntity.ok(friendLis);
         }
-        catch (FriendListNotFoundException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
         catch (UserNotFoundException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in friend entity. " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        catch (EmptyFriendsException e){
+            logger.error(HttpStatus.NO_CONTENT + ": error in friends entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(e.getMessage());
         }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
+    // TODO: Check the mapping in frontend
     @GetMapping("{friendId}")
-    public ResponseEntity<?> getFriendElement(@PathVariable  Long friendId){
+    public ResponseEntity<?> getFriendElement(@PathVariable Long friendId){
         try{
             Optional<Friend> friendOpt = friendService.findById(friendId);
             return ResponseEntity.ok(new FriendDto(friendOpt.orElse(new Friend())));
         }
-        catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @PostMapping("/add/{friendId}")
@@ -98,45 +102,43 @@ public class FriendController {
             Friend newFriend = friendService.save(friendId, user);
             return ResponseEntity.ok(newFriend);
         }
-        catch (FriendRequestException e){
+        catch (UserNotFoundException e){
+            logger.error(HttpStatus.NOT_FOUND + ": error in friend entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch (InvalidFriendRequestException e){
+            logger.error(HttpStatus.BAD_REQUEST + ": error in friend entity. " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
-        catch (DataAccessException e){
-            logger.error("Error adding friend: " + e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error adding friend: " + e.getMessage());
+        catch (FriendRequestAlreadyExistsException e){
+            logger.error(HttpStatus.CONFLICT + ": error occurred in friends entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
-        catch (Exception e){
-            logger.error("Unexpected error adding friend: " + e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error adding friend: " + e.getMessage());
-        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @PutMapping("{friendId}")
-    public ResponseEntity<?> updateFriend(@PathVariable Long friendId, @RequestBody Friend friend, @AuthenticationPrincipal User user){
+    public ResponseEntity<?> updateFriend(@PathVariable Long friendId,
+                                          @RequestBody Friend friend,
+                                          @AuthenticationPrincipal User user){
         try{
             Friend approveFriend = friendService.save(friend);
             return ResponseEntity.ok(approveFriend);
         }
-        catch (IllegalArgumentException | NullPointerException | DataAccessException e){
-            logger.error("An error occurred while saving the friend object", e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("An error occurred while saving the friend object: " + e.getMessage());
+        catch (MissingFieldException e){
+            logger.error(HttpStatus.BAD_REQUEST + ": error occurred in friend entity. " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @DeleteMapping("{friendId}")
     public ResponseEntity<?> deleteFriend(@PathVariable Long friendId){
         try{
             friendService.deleteById(friendId);
-            return ResponseEntity.ok("Friend has been removed");
+            return ResponseEntity.ok("Friend has been removed.");
         }
-        catch (FriendNotFoundException e){
-            logger.error(HttpStatus.NOT_FOUND + "Friend was not found");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Friend with ID " + friendId + " does not exist");
-        }
-        catch (Exception e){
-            logger.error(HttpStatus.INTERNAL_SERVER_ERROR + ": an error occurred.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while deleting the friend: " + e.getMessage());
-        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @DeleteMapping("{friendId}/unfriend")
@@ -145,17 +147,11 @@ public class FriendController {
             friendService.deleteFriendByUserAndFriend(friendId, user);
             return ResponseEntity.ok("Friend has been removed. 1:26:28");
         }
-        catch (DataAccessException e){
-            logger.error(HttpStatus.BAD_REQUEST + ": Failed to remove friend.");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
-        catch (NotFoundException e){
-            logger.error(HttpStatus.NOT_FOUND + ": friend was not found with friendId: " + friendId);
+        catch (NotFriendException e){
+            logger.error(HttpStatus.NOT_FOUND + ": " + e.getMessage() + " Cannot delete a friend who are not friends.");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred."); }
     }
 
     @GetMapping("/user/{friendId}/friendStatus")
@@ -164,8 +160,6 @@ public class FriendController {
             FriendIdDto friendStat = friendService.getStatByIds(friendId, user.getId());
             return ResponseEntity.ok(friendStat);
         }
-        catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); }
     }
 }

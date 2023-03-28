@@ -9,8 +9,7 @@ public class PostsPhoto {
     private Long id;
     private String type; // type of uploaded file
     private String myFileName; // name of uploaded file
-    @Lob
-    private byte[] postByte;
+
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "posts_id")
@@ -39,14 +38,6 @@ public class PostsPhoto {
 
     public void setMyFileName(String myFileName) {
         this.myFileName = myFileName;
-    }
-
-    public byte[] getPostByte() {
-        return postByte;
-    }
-
-    public void setPostByte(byte[] postByte) {
-        this.postByte = postByte;
     }
 
     public Posts getPosts() {
