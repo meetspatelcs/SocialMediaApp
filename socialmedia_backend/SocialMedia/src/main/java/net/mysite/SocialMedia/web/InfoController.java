@@ -5,7 +5,6 @@ import net.mysite.SocialMedia.domain.User;
 import net.mysite.SocialMedia.dto.UserEditDto;
 import net.mysite.SocialMedia.err.UserNotFoundException;
 import net.mysite.SocialMedia.service.InfoService;
-import net.mysite.SocialMedia.service.PostService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +18,7 @@ import java.util.NoSuchElementException;
 @RequestMapping("/api/UsersInfo")
 public class InfoController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PostService.class);
+    private static final Logger logger = LoggerFactory.getLogger(InfoController.class);
     @Autowired
     private InfoService infoService;
 

@@ -14,4 +14,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Set<User> findUserByNameOrEmail(String searchTerm, Long userId);
     @Query("SELECT u FROM User u WHERE u.Identification = :Identification")
     Optional<User> findByIdentification(String Identification);
+
 }

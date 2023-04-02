@@ -29,4 +29,7 @@ public interface UserPageRepository extends JpaRepository<UserPage, Long> {
     @Transactional
     @Query("DELETE FROM UserPage u WHERE (u.page.id = :pageId AND u.user = :user)")
     void deleteUserPageByPageIdAndUser(Long pageId, User user);
+
+    @Query("SELECT p.page.id FROM UserPage p WHERE (p.user.id = :userID AND p.pageRole = :default_join)")
+    Set<Long> findLongPageByUser(Long userID, String default_join);
 }

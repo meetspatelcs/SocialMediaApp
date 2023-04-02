@@ -6,8 +6,8 @@ import net.mysite.SocialMedia.dto.FriendDto;
 import net.mysite.SocialMedia.dto.FriendIdDto;
 import net.mysite.SocialMedia.err.*;
 import net.mysite.SocialMedia.err.UserNotFoundException;
+import net.mysite.SocialMedia.service.FriendRecommendationService;
 import net.mysite.SocialMedia.service.FriendService;
-import net.mysite.SocialMedia.service.PostService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +22,11 @@ import java.util.Set;
 @RequestMapping("/api/friends")
 public class FriendController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PostService.class);
+    private static final Logger logger = LoggerFactory.getLogger(FriendController.class);
     @Autowired
     private FriendService friendService;
+    @Autowired
+    private FriendRecommendationService friendRecommendationService;
 
     @GetMapping("")
     public ResponseEntity<?> getUsersFriend(@AuthenticationPrincipal User user){
@@ -161,5 +163,11 @@ public class FriendController {
             return ResponseEntity.ok(friendStat);
         }
         catch (Exception e){ return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); }
+    }
+
+    @GetMapping("/recommendation")
+    public ResponseEntity<?> getRecommendedUsers(@AuthenticationPrincipal User user){
+        Set<User> userSet = friendRecommendationService.generateNewFriendRecommendations(user);
+        return ResponseEntity.ok(userSet);
     }
 }

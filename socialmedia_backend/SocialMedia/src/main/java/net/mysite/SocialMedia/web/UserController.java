@@ -6,7 +6,6 @@ import net.mysite.SocialMedia.err.IdentificationException;
 import net.mysite.SocialMedia.err.UsernameAlreadyTakenException;
 import net.mysite.SocialMedia.err.UserNotFoundException;
 import net.mysite.SocialMedia.service.InfoService;
-import net.mysite.SocialMedia.service.PostService;
 import net.mysite.SocialMedia.service.UserService;
 import net.mysite.SocialMedia.service.UserThumbnailService;
 import org.slf4j.Logger;
@@ -23,7 +22,7 @@ import java.util.Set;
 @RequestMapping("/api/users")
 public class UserController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PostService.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     @Autowired
     private UserService userService;
     @Autowired

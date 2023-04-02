@@ -24,7 +24,7 @@ public class CommentController {
     private CommentService commentService;
     @Autowired
     private PostService postService;
-    private static final Logger logger = LoggerFactory.getLogger(PostService.class);
+    private static final Logger logger = LoggerFactory.getLogger(CommentController.class);
 
     @PostMapping("")
     public ResponseEntity<?> createComment(@AuthenticationPrincipal User user,

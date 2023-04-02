@@ -23,16 +23,18 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
+import static net.mysite.SocialMedia.company.constants.PostConstants.MULTIPART_FORM_DATA;
+
 @RestController
 @RequestMapping("/api/posts")
 public class PostController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PostService.class);
+    private static final Logger logger = LoggerFactory.getLogger(PostController.class);
     @Autowired
     private PostService postService;
     @Autowired
     private PostsPhotoService postsPhotoService;
-    private static final String MULTIPART_FORM_DATA = "multipart/form-data";
+
 
     @PostMapping(value = "", consumes = {MULTIPART_FORM_DATA})
     public ResponseEntity<?> createPost(@RequestParam(value = "myFile", required = false) MultipartFile myFile,

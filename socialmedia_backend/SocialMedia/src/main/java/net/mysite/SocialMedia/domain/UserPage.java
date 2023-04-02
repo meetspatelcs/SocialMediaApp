@@ -11,15 +11,12 @@ public class UserPage implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-
     @ManyToOne
     @JoinColumn(name = "page_id")
     private Page page;
-
     private String pageRole;
 
     public Long getId() {

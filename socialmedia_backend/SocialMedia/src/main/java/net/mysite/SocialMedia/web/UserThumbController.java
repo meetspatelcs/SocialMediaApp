@@ -19,7 +19,7 @@ import java.io.IOException;
 @RequestMapping("/api/userThumbnails")
 public class UserThumbController {
 
-    private final Logger logger = LoggerFactory.getLogger(PagePostPhotoService.class);
+    private final Logger logger = LoggerFactory.getLogger(UserThumbController.class);
     @Autowired
     private UserThumbnailService userThumbnailService;
     private static final String MULTIPART_FORM_DATA = "multipart/form-data";
